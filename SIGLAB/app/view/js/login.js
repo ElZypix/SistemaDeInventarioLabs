@@ -58,7 +58,7 @@ form.addEventListener('submit', async (e) => {
   e.preventDefault();
   const usuario = form.usuario.value.trim();
   if (!usuario || !pass.value) {
-    msg.innerHTML = `${icono('alerta', 'sm')} Escribe tu usuario y contraseña.`;
+    msg.innerHTML = `${icono('alerta', 'sm')} Escribe tu usuario y contraseña por favor.`;
     form.classList.remove('agitar'); void form.offsetWidth; form.classList.add('agitar');
     return;
   }
