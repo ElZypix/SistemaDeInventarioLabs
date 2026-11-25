@@ -1,0 +1,62 @@
+/* SIGLAB — login.css */
+.login { min-height: 100dvh; display: grid; grid-template-columns: 1.1fr 1fr; }
+
+.login-arte {
+  position: relative; overflow: hidden;
+  display: flex; flex-direction: column; justify-content: space-between;
+  padding: 36px 48px; color: #e8eefb;
+  background:
+    radial-gradient(700px 420px at 15% 110%, rgba(14, 165, 183, .35), transparent 60%),
+    radial-gradient(800px 500px at 100% 0%, rgba(79, 140, 255, .35), transparent 60%),
+    linear-gradient(160deg, #0e2148 0%, #1b396a 55%, #102a55 100%);
+}
+.login-arte::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background-image: linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px);
+  background-size: 34px 34px;
+  mask-image: radial-gradient(circle at 50% 45%, #000 0%, transparent 75%);
+}
+.arte-logo { height: 46px; width: auto; opacity: .95; }
+.arte-centro { position: relative; z-index: 1; max-width: 520px; }
+.arte-centro h1 { font-family: var(--font-display); font-size: 54px; letter-spacing: -1.5px; margin: 26px 0 8px; line-height: 1; }
+.arte-centro p { font-size: 16px; color: #c3d0ea; margin: 0 0 22px; max-width: 440px; }
+.arte-centro b { color: #fff; }
+.leyenda { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13px; color: #c3d0ea; }
+.leyenda li { display: flex; align-items: center; gap: 8px; }
+.login-arte .st-verde { --st: #22c55e; } .login-arte .st-ambar { --st: #fbbf24; } .login-arte .st-rojo { --st: #fb7185; } .login-arte .st-azul { --st: #60a5fa; }
+.arte-pie { position: relative; z-index: 1; font-size: 12.5px; color: #93a5c9; }
+
+/* Mini laboratorio animado */
+.mini-lab { display: grid; grid-template-columns: repeat(8, 34px); gap: 8px; }
+.mini-lab i {
+  height: 26px; border-radius: 7px;
+  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12);
+  position: relative; animation: miniEntra .6s var(--ease-spring) backwards;
+}
+.mini-lab i::after { content: ""; position: absolute; right: 5px; top: 5px; width: 6px; height: 6px; border-radius: 50%; background: var(--c, #22c55e); box-shadow: 0 0 10px var(--c, #22c55e); transition: background-color .6s, box-shadow .6s; }
+.mini-lab i.vacio { background: transparent; border-style: dashed; }
+.mini-lab i.vacio::after { display: none; }
+@keyframes miniEntra { from { opacity: 0; transform: translateY(10px) scale(.8); } }
+
+/* Formulario */
+.login-form-wrap { position: relative; display: grid; place-items: center; padding: 32px; background: var(--surface); }
+.tema-btn { position: absolute; top: 18px; right: 18px; }
+.login-form { width: min(380px, 100%); display: flex; flex-direction: column; gap: 16px; animation: modalEntra .5s var(--ease-spring); }
+.form-logo { height: 54px; width: auto; align-self: flex-start; margin-bottom: 6px; }
+.dark .form-logo { content: url("../img/tecnm-blanco.png"); }
+.login-form h2 { margin: 0; font-family: var(--font-display); font-size: 28px; letter-spacing: -.5px; }
+.login-form .sub { margin: -10px 0 6px; color: var(--texto-3); }
+.input-icono { position: relative; }
+.input-icono > span { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--texto-3); display: flex; pointer-events: none; }
+.input-icono .input { padding-left: 40px; height: 46px; border-radius: 12px; }
+.ver-pass { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); border: 0; background: transparent; color: var(--texto-3); width: 36px; height: 36px; border-radius: 8px; display: grid; place-items: center; cursor: pointer; }
+.ver-pass:hover { background: var(--surface-3); color: var(--texto); }
+.entrar { height: 48px; border-radius: 12px; font-size: 15px; margin-top: 4px; }
+.login-msg { min-height: 0; font-size: 13px; font-weight: 600; color: var(--rojo); display: flex; align-items: center; gap: 8px; transition: min-height .2s; }
+.login-msg:not(:empty) { min-height: 20px; }
+.pie-form { margin: 8px 0 0; font-size: 12px; color: var(--texto-3); text-align: center; }
+
+@media (max-width: 880px) {
+  .login { grid-template-columns: 1fr; }
+  .login-arte { display: none; }
+}

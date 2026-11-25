@@ -1,0 +1,315 @@
+==============================================================================
+ SIGLAB - Sistema de Gestión de Laboratorios
+==============================================================================
+
+ Versión:        1.5 (web)
+ Área usuaria:   Laboratorio de Desarrollo de Software y
+                 Laboratorio de Telecomunicaciones,
+                 Instituto Tecnológico de Comitán (TecNM)
+ Desarrollo:     Brando Giovanny Salazar Pérez
+                 Ingeniería en Sistemas Computacionales (No. de control 23700181)
+                 Servicio social, agosto-diciembre 2026
+ Fecha:          noviembre de 2026
+
+
+------------------------------------------------------------------------------
+ 1. REQUISITOS
+------------------------------------------------------------------------------
+
+ Con Docker (recomendado):
+ - Docker Desktop (Windows/macOS) o Docker Engine + Compose (Linux).
+ - Puertos libres: 8080 (sistema) y 8081 (phpMyAdmin). Se cambian en .env.
+
+ Sin Docker (Laragon / XAMPP):
+ - PHP 8.1 o superior con pdo_mysql y mbstring.
+ - MySQL 8 o MariaDB 10.6 o superior.
+
+ Navegador actualizado: Chrome, Edge o Firefox. Funciona sin internet
+ (no usa CDN ni librerías externas).
+
+
+------------------------------------------------------------------------------
+ 2. CONTENIDO DEL PAQUETE
+------------------------------------------------------------------------------
+
+ SIGLAB\
+   docker-compose.yml   Servicios: web (PHP 8.3 + Apache), db (MariaDB 11)
+                        y phpmyadmin.
+   Dockerfile           Imagen de PHP con pdo_mysql y Apache configurado.
+   .env.example         Plantilla de contraseñas y puertos.
+   db\siglab.sql        Base de datos inicial: esquema, catálogos, los dos
+                        laboratorios con su distribución y los 56 equipos.
+   backups\             Respaldos de emergencia (fuera de la carpeta pública).
+   app\                 Código del sistema (carpeta pública del servidor).
+     index.php          Inicio de sesión.
+     app.php            Aplicación principal.
+     config\            Configuración y conexión PDO (bloqueada a la web).
+     model\php\         Modelos: usuarios, seguridad, inventario, catálogos,
+                        respaldo.
+     ctrl\php\          APIs (JSON) y reporte PDF.
+     view\css|js|img\   Interfaz: estilos, módulos JavaScript y logos.
+   LEEME.txt            Este documento.
+
+
+------------------------------------------------------------------------------
+ 3. INSTALACIÓN CON DOCKER
+------------------------------------------------------------------------------
+
+ 1) Copia .env.example como .env y cambia las contraseñas.
+    (Si no creas .env se usan valores por defecto; sirve para probar,
+    no para dejarlo en uso.)
+
+ 2) Abre una terminal en la carpeta SIGLAB y ejecuta:
+
+        docker compose up -d --build
+
+    La primera vez MariaDB importa db\siglab.sql automáticamente.
+
+ 3) Entra a  http://localhost:8080
+
+        Usuario:     admin
+        Contraseña:  Siglab2026!
+
+    El sistema pedirá cambiar la contraseña en el primer acceso.
+
+ 4) phpMyAdmin queda en http://localhost:8081 (usuario y contraseña de .env).
+
+ Comandos útiles:
+    docker compose stop                Detener sin borrar datos.
+    docker compose start               Volver a iniciar.
+    docker compose logs -f web         Ver errores de PHP/Apache.
+    docker compose down -v             BORRA la base de datos (volumen) y
+                                       la vuelve a crear desde siglab.sql
+                                       en el siguiente "up". Úsalo solo si
+                                       quieres empezar de cero.
+
+ Importante: db\siglab.sql solo se importa cuando el volumen de la base de
+ datos está vacío (la primera vez). No cambies DB_NAME en .env: el script
+ crea la base "siglab_db".
+
+
+------------------------------------------------------------------------------
+ 4. INSTALACIÓN SIN DOCKER (Laragon / XAMPP)
+------------------------------------------------------------------------------
+
+ 1) Importa db\siglab.sql en MySQL/MariaDB (phpMyAdmin o HeidiSQL).
+ 2) Copia el contenido de la carpeta app\ a la carpeta pública
+    (por ejemplo C:\laragon\www\siglab\).
+ 3) Copia config\config.local.example.php como config\config.local.php
+    y escribe el usuario y contraseña de tu MySQL.
+ 4) Abre http://localhost/siglab/
+
+
+------------------------------------------------------------------------------
+ 5. CÓMO SE USA
+------------------------------------------------------------------------------
+
+ Roles
+ - Administrador: control total (equipos, mapa, catálogos, usuarios,
+   respaldos).
+ - Visualización: consulta el mapa, busca, filtra y genera reportes;
+   no puede modificar nada.
+
+ Mapa del laboratorio
+ - Arriba se cambia entre Desarrollo de Software y Telecomunicaciones.
+ - La fila 1 es la más cercana al pizarrón.
+ - Cada tarjeta muestra el número (PC01...), el sistema operativo y el
+   estado de Monitor, Teclado, Mouse y CPU. Al dejar el cursor encima
+   aparece el detalle completo (software, observaciones).
+ - Clic en una tarjeta: abre la ficha para editarla.
+ - Clic en un lugar vacío: da de alta una PC en ese lugar.
+
+ Mover equipos (arrastrar y soltar)
+ - Arrastra la tarjeta completa a otro lugar.
+   * Si el lugar está vacío, se mueve.
+   * Si hay otra PC, intercambian lugares (ej. PC01 <-> PC20).
+   * Si la sueltas en "Sin ubicar", queda fuera del mapa.
+ - El número de inventario no cambia al moverla.
+ - Aparece un aviso con el botón "Deshacer".
+
+ Estado de la máquina (automático + manual)
+ - El color se calcula solo con los periféricos:
+     Verde  = todo presente.
+     Ámbar  = falta o está dañado el teclado o el mouse.
+     Rojo   = falta o está dañado el monitor o el CPU.
+ - "Fijar el estado manualmente" permite poner cualquier color con un
+   motivo (ej. "En mantenimiento", "No enciende", "En revisión"). La tarjeta
+   muestra un candado. Al desactivarlo vuelve al cálculo automático.
+ - Al inicio todas las PCs están en Azul con el motivo "Pendiente de
+   inventario". En cuanto capturas sus datos, pasan solas a automático.
+
+ Edición en lote (para levantar el inventario rápido)
+ - Botón "Seleccionar": marca varias PCs (o clic en F1, F2... para toda la
+   fila) y pulsa "Editar en lote".
+ - Puedes agregar o quitar sistemas operativos y software, cambiar
+   periféricos o el estado de todas a la vez. Lo que no toques queda igual.
+
+ Editar el mapa
+ - Botón "Editar mapa": al pasar el cursor por un lugar aparecen botones
+   para insertar un lugar a la izquierda o a la derecha, o quitar un lugar
+   vacío. Abajo está "Agregar fila". Una fila sin equipos se puede eliminar.
+
+ Filtros y búsqueda
+ - Clic en los contadores de estado para filtrar (se pueden combinar).
+ - Filtros por sistema operativo, software (todos los marcados) y
+   periféricos (completos / con faltantes / con dañados).
+ - Buscador (Ctrl+K o la tecla /): busca en los dos laboratorios por
+   número, sistema, software, estado u observaciones; Enter salta a la PC.
+
+ Catálogos
+ - Sistemas operativos (con familia Windows/Linux/macOS) y software (con
+   categoría). Se pueden agregar desde la sección Catálogos o directamente
+   desde la ficha de una PC. Un elemento en uso no se borra: se desactiva.
+
+ Reporte PDF
+ - Botón "Reporte PDF": elige laboratorio (o ambos), qué estados incluir y
+   si lleva la columna de software. Se abre listo para imprimir; elige
+   "Guardar como PDF". Incluye logos SEP, TecNM e ITC, resumen por estado,
+   tabla de equipos y espacio para firmas.
+
+ Respaldo
+ - Descargar: genera un .sql con toda la información.
+ - Restaurar: reemplaza todo con un .sql de SIGLAB. Antes se guarda un
+   respaldo de emergencia en la carpeta backups\.
+
+
+------------------------------------------------------------------------------
+ 5b. FUNCIONES AGREGADAS EN LA VERSIÓN 1.3
+------------------------------------------------------------------------------
+
+ Modo recorrido (botón "Recorrido" o tecla G)
+ - Pantalla completa para capturar PC por PC con botones grandes; ideal
+   desde el celular o la tablet. "Guardar y seguir" pasa a la siguiente.
+ - "Solo pendientes" recorre únicamente las PCs aún sin capturar.
+ - Para abrirlo en el celular, entra desde la misma red a la IP de la
+   computadora servidor (ej. http://192.168.1.50/SIGLAB/app/).
+
+ Copiar configuración
+ - En la ficha de una PC: "Usar como modelo", marca las PCs destino y
+   pulsa "Copiar de PCxx". También desde la barra de selección.
+ - Se puede copiar periféricos, sistema operativo, software y/o estado.
+
+ Perfiles de software (Catálogos → Perfiles)
+ - Conjuntos de programas con nombre que se aplican de un clic en la
+   ficha, en la edición en lote y en el recorrido.
+
+ Atajos de teclado (botón del teclado o tecla ?)
+ - Flechas para moverse, Enter abre, M/T/R/C cambian periféricos,
+   1-4 fijan estado, 0 vuelve a automático, N/S/E/G acciones rápidas.
+
+ Matriz de software (menú Software)
+ - Tabla PCs × programas; clic en una celda para marcar/desmarcar.
+ - "Instalaciones pendientes (PDF)": qué programa falta y en qué PCs.
+
+ "En este estado desde"
+ - Cada PC guarda la fecha en que cambió de estado. Las tarjetas en
+   ámbar o rojo muestran los días; Estadísticas lista las más antiguas.
+
+ Pendientes (menú Pendientes y en la ficha de cada PC)
+ - Tareas con casilla de completado y responsable. Las tarjetas muestran
+   cuántos pendientes abiertos tiene cada PC.
+
+ Croquis en PDF y Excel (botón "Reporte PDF")
+ - Opción "Incluir croquis": mapa a color del laboratorio.
+ - "Exportar todo a Excel": inventario, software y pendientes (.xlsx).
+
+ Estadísticas (menú Estadísticas)
+ - Estado de los equipos, sistemas operativos, periféricos con
+   problemas, PCs con más tiempo en falla y cobertura de software.
+
+ ACTUALIZAR UNA INSTALACIÓN EXISTENTE A 1.3
+ - Ejecuta UNA vez db\migracion_v1.3.sql en HeidiSQL o phpMyAdmin.
+   Conserva todos los datos. Las instalaciones nuevas no lo necesitan.
+
+------------------------------------------------------------------------------
+ 5c. CAMBIOS DE LA VERSIÓN 1.4 (ficha minimalista)
+------------------------------------------------------------------------------
+
+ Ficha de la PC más limpia
+ - Arriba solo lo esencial: periféricos (clic en cada uno para cambiar
+   presente → faltante → dañado), sistema operativo y software.
+ - Datos del equipo, estado manual, pendientes y notas van en secciones
+   plegables con un resumen a la derecha.
+ - "Usar como modelo" y "Eliminar" están en el menú ⋯ de abajo.
+
+ Listas con búsqueda (combobox)
+ - Escribe para filtrar; Enter elige, flechas se mueven, Esc cierra.
+ - Sistema operativo en cascada: Familia → Versión
+   (Linux: Familia → Distribución → Versión). La versión es opcional.
+ - "Otra versión…" / "Otra distribución…" al final abre un campo; al
+   aceptar se agrega al catálogo y queda elegido.
+ - Software: escribe y elige; cada programa queda como etiqueta con ×.
+   Si no existe, "Agregar … al catálogo".
+ - Los catálogos siempre están ordenados (familia, distribución,
+   versión de la más nueva a la más vieja; software por categoría).
+ - Sin versión se muestra solo el nombre ("Zorin OS", "macOS").
+   macOS usa nombre comercial: en la lista "Sequoia (15)", en la
+   tarjeta "macOS Sequoia".
+
+ ACTUALIZAR UNA INSTALACIÓN EXISTENTE A 1.4
+ - Ejecuta UNA vez db\migracion_v1.4.sql en HeidiSQL o phpMyAdmin
+   (después de la 1.3). Conserva todos los datos.
+
+------------------------------------------------------------------------------
+ 5d. CAMBIOS DE LA VERSIÓN 1.5 (versiones y especificaciones)
+------------------------------------------------------------------------------
+
+ Software con versión
+ - En la ficha escribe el programa y elígelo; si tiene versiones
+   registradas se abre la lista de versiones (Sin especificar, 26,
+   8.2…, "Otra versión…"). La etiqueta queda como "Apache NetBeans 26".
+ - Clic en una etiqueta para cambiar su versión. Cada PC puede tener
+   una versión distinta del mismo programa.
+ - "Otro programa…" da de alta un programa nuevo (nombre, categoría y
+   versión opcional) directo en la base de datos.
+ - La matriz, el filtro del mapa, las estadísticas y los reportes
+   agrupan por programa y muestran la versión instalada.
+ - Un perfil con "Python" (sin versión) no cambia la versión que ya
+   tenga una PC; con versión exacta, la reemplaza.
+
+ Especificaciones técnicas (sección plegable "Especificaciones")
+ - Modelo del equipo, número de serie, procesador, RAM, tarjeta
+   gráfica, motherboard y discos (SSD / NVMe / HDD con capacidad).
+ - Los componentes se eligen de listas con búsqueda; "Otro…" los
+   agrega al catálogo al guardar.
+ - Se copian con "Usar como modelo" (menos el número de serie) y se
+   pueden aplicar en la edición en lote.
+ - Salen en Excel y, si lo marcas, en el reporte PDF de inventario.
+ - Catálogos → Componentes: renombrar, desactivar o eliminar.
+
+ ACTUALIZAR UNA INSTALACIÓN EXISTENTE A 1.5
+ - Ejecuta UNA vez db\migracion_v1.5.sql en HeidiSQL o phpMyAdmin
+   (después de la 1.4). Conserva todos los datos.
+
+------------------------------------------------------------------------------
+ 6. SEGURIDAD
+------------------------------------------------------------------------------
+
+ - Contraseñas con password_hash (bcrypt).
+ - Bloqueo progresivo tras 3 intentos fallidos, guardado en la base de
+   datos por usuario e IP.
+ - Token CSRF en todas las operaciones que modifican datos.
+ - Sesión con cookie HttpOnly/SameSite y cierre tras 2 horas sin uso.
+ - Permisos verificados en el servidor en cada petición.
+ - Las carpetas config\ y model\ no se pueden abrir desde el navegador.
+ - Debe existir siempre al menos un administrador activo.
+
+
+------------------------------------------------------------------------------
+ 7. CAMBIOS RESPECTO A SUGACI
+------------------------------------------------------------------------------
+
+ Se rescató: inicio/cierre de sesión con bloqueo, usuarios y roles,
+ cambio de contraseña, buscador global, reportes con logos institucionales,
+ respaldo/restauración y tema claro/oscuro.
+
+ Se mejoró:
+ - Credenciales fuera del código (variables de entorno / config.local.php).
+ - Las tablas ya no se crean ni normalizan en cada petición.
+ - Roles simples (admin / visualización) en lugar de reglas fijas por id.
+ - Bloqueo de intentos en la base de datos (no se reinicia al borrar la
+   cookie) y protección CSRF.
+ - El tema se guarda por usuario en la base de datos.
+ - JavaScript dividido en módulos en lugar de un solo archivo grande.
+ - Errores internos al registro del servidor, no al navegador.
+==============================================================================
