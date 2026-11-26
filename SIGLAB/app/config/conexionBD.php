@@ -27,7 +27,10 @@ final class Conexion
             $pdo = new PDO($dsn, $usuario, $clave, [
                 PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                PDO::ATTR_EMULATE_PREPARES   => false,
+                // PostgreSQL de Neon pasa por un "pooler" (PgBouncer) que no admite las sentencias
+                // preparadas del servidor que usa PDO (al liberarlas manda DEALLOCATE y falla en
+                // silencio, abortando la transacción). Con preparación emulada no hay ese problema.
+                PDO::ATTR_EMULATE_PREPARES   => str_starts_with($dsn, 'pgsql:'),
             ]);
         } catch (PDOException $e) {
             error_log('[SIGLAB] Conexión BD: ' . $e->getMessage());
