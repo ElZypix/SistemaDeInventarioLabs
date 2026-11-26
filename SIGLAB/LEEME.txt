@@ -293,6 +293,8 @@
  - render.yaml (raíz del repo) y SIGLAB/Dockerfile.render: cómo Render
    construye y arranca SIGLAB.
  - db/siglab_pg.sql: la base para PostgreSQL (Neon).
+ - instalar_pg.php: al arrancar en Render, si la base de Neon está vacía
+   la crea sola con db/siglab_pg.sql (no hay que pegar SQL a mano).
  - db/migracion_v1.6.sql: tabla de sesiones para MySQL local (opcional).
 
  Variables en Render

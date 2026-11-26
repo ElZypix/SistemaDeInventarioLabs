@@ -27,6 +27,8 @@ RUN apt-get update \
  && docker-php-ext-enable opcache || true
 
 COPY app/ /var/www/html/
+COPY db/siglab_pg.sql /var/www/db/siglab_pg.sql
+COPY instalar_pg.php /var/www/instalar_pg.php
 RUN rm -f /var/www/html/config/config.local.php \
  && mkdir -p /tmp/siglab_backups && chown www-data:www-data /tmp/siglab_backups
 
@@ -36,4 +38,4 @@ ENV TRUST_PROXY=1 \
     PORT=10000
 
 # Render indica el puerto en $PORT: Apache escucha ahí
-CMD ["sh", "-c", "sed -i \"s/^Listen .*/Listen ${PORT}/\" /etc/apache2/ports.conf && sed -i \"s/<VirtualHost \\*:[0-9]*>/<VirtualHost *:${PORT}>/\" /etc/apache2/sites-enabled/000-default.conf && exec apache2-foreground"]
+CMD ["sh", "-c", "sed -i \"s/^Listen .*/Listen ${PORT}/\" /etc/apache2/ports.conf && sed -i \"s/<VirtualHost \\*:[0-9]*>/<VirtualHost *:${PORT}>/\" /etc/apache2/sites-enabled/000-default.conf && php /var/www/instalar_pg.php; exec apache2-foreground"]
