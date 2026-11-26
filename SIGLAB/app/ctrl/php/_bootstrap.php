@@ -6,22 +6,13 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../config/conexionBD.php';
+require_once __DIR__ . '/../../config/sesion.php';
 require_once __DIR__ . '/../../model/php/UsuarioModelo.php';
 
 function iniciar_sesion(): void
 {
     if (session_status() === PHP_SESSION_ACTIVE) return;
-    $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
-    session_name('SIGLAB_SID');
-    session_set_cookie_params([
-        'lifetime' => 0,
-        'path'     => '/',
-        'secure'   => $https,
-        'httponly' => true,
-        'samesite' => 'Lax',
-    ]);
-    ini_set('session.use_strict_mode', '1');
-    session_start();
+    abrir_sesion();
 
     // Cierre por inactividad
     $ahora = time();
@@ -112,6 +103,14 @@ function texto($v, int $max): string
 
 function ip_cliente(): string
 {
+    // En Render todas las peticiones llegan desde su proxy: la IP real viene en las cabeceras.
+    // Solo se confía en ellas si el servidor lo indica (TRUST_PROXY=1), para que no se puedan falsificar en local.
+    if (getenv('TRUST_PROXY') === '1') {
+        foreach (['HTTP_CF_CONNECTING_IP', 'HTTP_TRUE_CLIENT_IP', 'HTTP_X_FORWARDED_FOR'] as $h) {
+            $v = trim(explode(',', (string)($_SERVER[$h] ?? ''))[0]);
+            if ($v !== '' && filter_var($v, FILTER_VALIDATE_IP)) return substr($v, 0, 45);
+        }
+    }
     return substr((string)($_SERVER['REMOTE_ADDR'] ?? '0.0.0.0'), 0, 45);
 }
 

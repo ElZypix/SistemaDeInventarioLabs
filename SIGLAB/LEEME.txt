@@ -2,7 +2,7 @@
  SIGLAB - Sistema de Gestión de Laboratorios
 ==============================================================================
 
- Versión:        1.5 (web)
+ Versión:        1.6 (web)
  Área usuaria:   Laboratorio de Desarrollo de Software y
                  Laboratorio de Telecomunicaciones,
                  Instituto Tecnológico de Comitán (TecNM)
@@ -280,6 +280,35 @@
  ACTUALIZAR UNA INSTALACIÓN EXISTENTE A 1.5
  - Ejecuta UNA vez db\migracion_v1.5.sql en HeidiSQL o phpMyAdmin
    (después de la 1.4). Conserva todos los datos.
+
+------------------------------------------------------------------------------
+ 5e. VERSIÓN 1.6 — SIGLAB EN LÍNEA (Render + Neon)
+------------------------------------------------------------------------------
+
+ Local (desarrollo): todo sigue igual con MySQL en Docker.
+ En línea (uso): Render publica la app desde GitHub y Neon guarda los
+ datos en PostgreSQL.
+
+ Archivos nuevos
+ - render.yaml (raíz del repo) y SIGLAB/Dockerfile.render: cómo Render
+   construye y arranca SIGLAB.
+ - db/siglab_pg.sql: la base para PostgreSQL (Neon).
+ - db/migracion_v1.6.sql: tabla de sesiones para MySQL local (opcional).
+
+ Variables en Render
+ - DATABASE_URL = cadena de conexión de Neon
+   (postgresql://usuario:clave@host/neondb?sslmode=require)
+ - El Dockerfile ya pone TRUST_PROXY=1 y SESIONES_BD=1.
+
+ Respaldos (nuevo formato "datos v2")
+ - Sirven en MySQL y en PostgreSQL: un respaldo hecho en la laptop se
+   restaura en el SIGLAB en línea y al revés (Respaldo → Restaurar).
+ - Los respaldos viejos (v1.x) solo se pueden restaurar en MySQL.
+
+ Plan gratuito
+ - Render apaga SIGLAB tras 15 min sin visitas; la primera visita
+   después tarda alrededor de un minuto en abrir.
+ - Neon duerme la base tras 5 min sin uso y despierta sola.
 
 ------------------------------------------------------------------------------
  6. SEGURIDAD

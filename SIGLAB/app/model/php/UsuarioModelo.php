@@ -16,7 +16,7 @@ final class UsuarioModelo
 
     public function porUsuario(string $usuario): ?array
     {
-        $st = $this->db->prepare('SELECT * FROM usuarios WHERE usuario = ?');
+        $st = $this->db->prepare('SELECT * FROM usuarios WHERE LOWER(usuario) = LOWER(?)');
         $st->execute([$usuario]);
         return $st->fetch() ?: null;
     }
@@ -106,7 +106,7 @@ final class UsuarioModelo
 
     public function existeUsuario(string $usuario, int $exceptoId = 0): bool
     {
-        $st = $this->db->prepare('SELECT COUNT(*) FROM usuarios WHERE usuario = ? AND id <> ?');
+        $st = $this->db->prepare('SELECT COUNT(*) FROM usuarios WHERE LOWER(usuario) = LOWER(?) AND id <> ?');
         $st->execute([$usuario, $exceptoId]);
         return (int)$st->fetchColumn() > 0;
     }

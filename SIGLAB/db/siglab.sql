@@ -12,6 +12,7 @@ CREATE DATABASE IF NOT EXISTS `siglab_db` DEFAULT CHARACTER SET utf8mb4 COLLATE 
 USE `siglab_db`;
 
 DROP TABLE IF EXISTS `ajustes`;
+DROP TABLE IF EXISTS `sesiones`;
 DROP TABLE IF EXISTS `pendientes`;
 DROP TABLE IF EXISTS `perfil_software`;
 DROP TABLE IF EXISTS `perfiles_software`;
@@ -213,6 +214,17 @@ CREATE TABLE `ajustes` (
   `clave`  VARCHAR(60) NOT NULL,
   `valor`  VARCHAR(255) NULL,
   PRIMARY KEY (`clave`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- -----------------------------------------------------------------------------
+-- Sesiones (solo se usan en línea, con SESIONES_BD=1)
+-- -----------------------------------------------------------------------------
+CREATE TABLE `sesiones` (
+  `id`      VARCHAR(128) NOT NULL,
+  `datos`   TEXT NOT NULL,
+  `expira`  INT UNSIGNED NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `ix_sesiones_expira` (`expira`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =============================================================================

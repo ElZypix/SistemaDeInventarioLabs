@@ -15,16 +15,16 @@ final class Conexion
     {
         if (self::$pdo !== null) return self::$pdo;
 
-        if (DB_DSN === '' && !extension_loaded('pdo_mysql')) {
+        [$dsn, $usuario, $clave] = self::datosConexion();
+        if (str_starts_with($dsn, 'mysql:') && !extension_loaded('pdo_mysql')) {
             throw new ErrorConexionBD('PHP no tiene activada la extensión pdo_mysql. Actívala en php.ini (extension=pdo_mysql) y reinicia Apache.');
         }
-
-        $dsn = DB_DSN !== ''
-            ? DB_DSN
-            : 'mysql:host=' . DB_HOST . ';port=' . DB_PORT . ';dbname=' . DB_NAME . ';charset=utf8mb4';
+        if (str_starts_with($dsn, 'pgsql:') && !extension_loaded('pdo_pgsql')) {
+            throw new ErrorConexionBD('PHP no tiene activada la extensión pdo_pgsql.');
+        }
 
         try {
-            $pdo = new PDO($dsn, DB_USER, DB_PASS, [
+            $pdo = new PDO($dsn, $usuario, $clave, [
                 PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 PDO::ATTR_EMULATE_PREPARES   => false,
@@ -45,12 +45,36 @@ final class Conexion
             throw new ErrorConexionBD('No se pudo conectar a la base de datos. Revisa config/config.local.php y el registro de errores de PHP.');
         }
 
-        if ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite') {
+        $driver = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+        if ($driver === 'sqlite') {
             $pdo->exec('PRAGMA foreign_keys = ON');
+        } elseif ($driver === 'pgsql') {
+            $pdo->exec("SET TIME ZONE 'America/Mexico_City'");
         } else {
             $pdo->exec("SET time_zone = '-06:00'");
         }
         return self::$pdo = $pdo;
+    }
+
+    /** [dsn, usuario, contraseña] según DATABASE_URL (PostgreSQL), DB_DSN (pruebas) o DB_HOST… (MySQL). */
+    private static function datosConexion(): array
+    {
+        if (DATABASE_URL !== '') {
+            $u = parse_url(DATABASE_URL);
+            if (!$u || empty($u['host'])) throw new ErrorConexionBD('DATABASE_URL no es válida.');
+            parse_str($u['query'] ?? '', $q);
+            $dsn = 'pgsql:host=' . $u['host'] . ';port=' . ($u['port'] ?? 5432)
+                 . ';dbname=' . ltrim($u['path'] ?? '/neondb', '/')
+                 . ';sslmode=' . ($q['sslmode'] ?? 'require');
+            return [$dsn, urldecode($u['user'] ?? ''), urldecode($u['pass'] ?? '')];
+        }
+        if (DB_DSN !== '') return [DB_DSN, DB_USER, DB_PASS];
+        return ['mysql:host=' . DB_HOST . ';port=' . DB_PORT . ';dbname=' . DB_NAME . ';charset=utf8mb4', DB_USER, DB_PASS];
+    }
+
+    public static function driver(): string
+    {
+        return self::obtener()->getAttribute(PDO::ATTR_DRIVER_NAME);
     }
 
     public static function esMysql(): bool

@@ -1,0 +1,17 @@
+Options -Indexes
+DirectoryIndex index.php
+
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "same-origin"
+    # Los módulos JS se importan entre sí sin número de versión: que el navegador siempre revalide
+    <FilesMatch "\.(js|css)$">
+        Header set Cache-Control "no-cache"
+    </FilesMatch>
+</IfModule>
+
+# Archivos que nunca deben servirse
+<FilesMatch "\.(sql|bak|env|log|md|ini)$">
+    Require all denied
+</FilesMatch>

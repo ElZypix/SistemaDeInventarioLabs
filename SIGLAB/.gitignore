@@ -1,0 +1,9 @@
+.env
+backups/*.sql
+app/config/config.local.php
+
+# Render / local
+.env.*
+*.db
+Claude outputs/
+!.env.example

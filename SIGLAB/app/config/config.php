@@ -19,10 +19,14 @@ $env = static function (string $clave, string $defecto) use ($local): string {
 
 define('APP_NOMBRE', 'SIGLAB');
 define('APP_NOMBRE_LARGO', 'Sistema de Gestión de Laboratorios');
-define('APP_VERSION', '1.5');
+define('APP_VERSION', '1.6');
 define('INSTITUCION', 'Instituto Tecnológico de Comitán');
 
 define('DB_DSN',  $env('DB_DSN', ''));          // Solo para pruebas; normalmente vacío.
+// En línea (Render + Neon): DATABASE_URL=postgresql://usuario:clave@host/base?sslmode=require
+define('DATABASE_URL', $env('DATABASE_URL', ''));
+// 1 = guardar las sesiones en la base de datos (necesario en Render, cuyo disco se borra al reiniciar)
+define('SESIONES_BD', $env('SESIONES_BD', DATABASE_URL !== '' ? '1' : '0') === '1');
 define('DB_HOST', $env('DB_HOST', 'localhost'));
 define('DB_PORT', $env('DB_PORT', '3306'));
 define('DB_NAME', $env('DB_NAME', 'siglab_db'));

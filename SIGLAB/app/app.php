@@ -5,10 +5,8 @@ require_once __DIR__ . '/config/config.php';
 require_once __DIR__ . '/config/conexionBD.php';
 require_once __DIR__ . '/model/php/UsuarioModelo.php';
 
-session_name('SIGLAB_SID');
-session_set_cookie_params(['path' => '/', 'httponly' => true, 'samesite' => 'Lax',
-    'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off']);
-session_start();
+require_once __DIR__ . '/config/sesion.php';
+abrir_sesion();
 
 $u = null;
 if (!empty($_SESSION['usuario_id'])
