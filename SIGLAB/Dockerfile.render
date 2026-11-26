@@ -1,0 +1,41 @@
+# SIGLAB para Render (en línea, con PostgreSQL de Neon).
+# Render construye esta imagen desde GitHub; la conexión llega en la variable DATABASE_URL.
+FROM php:8.3-apache
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends libpq-dev \
+ && docker-php-ext-install pdo_pgsql pdo_mysql \
+ && apt-get purge -y --auto-remove libpq-dev && apt-get install -y --no-install-recommends libpq5 \
+ && rm -rf /var/lib/apt/lists/* \
+ && a2enmod rewrite headers \
+ && printf '<Directory /var/www/html>\n    AllowOverride All\n    Options -Indexes\n</Directory>\nServerTokens Prod\nServerSignature Off\n' > /etc/apache2/conf-enabled/siglab.conf \
+ && { \
+      echo 'date.timezone=America/Mexico_City'; \
+      echo 'upload_max_filesize=20M'; \
+      echo 'post_max_size=25M'; \
+      echo 'memory_limit=256M'; \
+      echo 'expose_php=Off'; \
+      echo 'display_errors=Off'; \
+      echo 'log_errors=On'; \
+      echo 'error_log=/dev/stderr'; \
+      echo 'session.use_strict_mode=1'; \
+      echo 'session.cookie_httponly=1'; \
+      echo 'session.cookie_samesite=Lax'; \
+      echo 'opcache.enable=1'; \
+      echo 'opcache.validate_timestamps=0'; \
+    } > /usr/local/etc/php/conf.d/siglab.ini \
+ && docker-php-ext-enable opcache || true
+
+COPY app/ /var/www/html/
+COPY db/siglab_pg.sql /var/www/db/siglab_pg.sql
+COPY instalar_pg.php /var/www/instalar_pg.php
+RUN rm -f /var/www/html/config/config.local.php \
+ && mkdir -p /tmp/siglab_backups && chown www-data:www-data /tmp/siglab_backups
+
+ENV TRUST_PROXY=1 \
+    SESIONES_BD=1 \
+    BACKUP_DIR=/tmp/siglab_backups \
+    PORT=10000
+
+# Render indica el puerto en $PORT: Apache escucha ahí
+CMD ["sh", "-c", "sed -i \"s/^Listen .*/Listen ${PORT}/\" /etc/apache2/ports.conf && sed -i \"s/<VirtualHost \\*:[0-9]*>/<VirtualHost *:${PORT}>/\" /etc/apache2/sites-enabled/000-default.conf && php /var/www/instalar_pg.php; exec apache2-foreground"]

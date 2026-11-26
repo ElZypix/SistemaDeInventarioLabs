@@ -1,0 +1,15 @@
+# Blueprint de Render para SIGLAB (plan gratuito). La base de datos está en Neon.
+services:
+  - type: web
+    name: siglab
+    runtime: docker
+    plan: free
+    dockerfilePath: ./SIGLAB/Dockerfile.render
+    dockerContext: ./SIGLAB
+    healthCheckPath: /salud.php
+    autoDeploy: true
+    envVars:
+      - key: DATABASE_URL
+        sync: false        # se pega a mano: la cadena de conexión de Neon
+      - key: TZ
+        value: America/Mexico_City

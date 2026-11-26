@@ -3,10 +3,8 @@
 declare(strict_types=1);
 require_once __DIR__ . '/config/config.php';
 
-session_name('SIGLAB_SID');
-session_set_cookie_params(['path' => '/', 'httponly' => true, 'samesite' => 'Lax',
-    'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off']);
-session_start();
+require_once __DIR__ . '/config/sesion.php';
+abrir_sesion();
 if (!empty($_SESSION['usuario_id'])) {
     header('Location: app.php');
     exit;
