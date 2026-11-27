@@ -112,14 +112,18 @@ function css_reporte(): string
 
   /* Margen de la hoja en 0: así Chrome no imprime su propio encabezado (título y URL) ni su pie.
      Los márgenes reales los dan el encabezado y el pie que se repiten en cada hoja. */
-  @page { size: Letter landscape; margin: 0; }
+  @page {
+    size: Letter landscape;
+    margin: 0 0 8mm;
+    @bottom-right { content: "Página " counter(page) " de " counter(pages); font: 8px Arial, Helvetica, sans-serif; color: #475569; padding-right: 10mm; vertical-align: top; }
+  }
   @media print {
     body { background: #fff; padding: 0 10mm; }
     .barra { display: none; }
     .pagina { width: 100%; margin: 0; box-shadow: none; }
     .pagina + .pagina { margin-top: 0; }
     .pagina > thead > tr > td { padding-top: 9mm; }
-    .pagina > tfoot > tr > td { padding-bottom: 6mm; }
+    .pagina > tfoot > tr > td { padding-bottom: 0; }
   }
 CSS;
 }
