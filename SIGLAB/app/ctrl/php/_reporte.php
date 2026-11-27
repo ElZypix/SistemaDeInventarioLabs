@@ -42,6 +42,34 @@ function html_firmas(array $firmas): string
     return $o . '</div>';
 }
 
+/**
+ * Chrome y Edge dibujan el pie con número de página en el margen de la hoja (@page).
+ * Firefox y Safari no lo soportan: ahí se imprime el pie de la tabla (sin número) y se avisa.
+ */
+function html_navegador(): string
+{
+    return <<<'HTML'
+<script>
+  (function () {
+    var ua = navigator.userAgent;
+    var conCajas = /Chrome\/|Edg\//.test(ua) && !/Firefox|FxiOS/.test(ua);
+    if (!conCajas) document.documentElement.classList.add('sin-cajas');
+    document.addEventListener('DOMContentLoaded', function () {
+      var a = document.getElementById('aviso-nav');
+      if (a && !conCajas) a.hidden = false;
+    });
+  })();
+</script>
+HTML;
+}
+
+function html_aviso_navegador(): string
+{
+    return '<div id="aviso-nav" class="aviso-nav" hidden><b>Estás usando Firefox o Safari.</b> El pie de SIGLAB con el número de página '
+         . 'solo sale completo al imprimir desde <b>Chrome</b> o <b>Edge</b>. Aquí, en el cuadro de impresión, desactiva '
+         . '"Imprimir encabezados y pies de página" para que no salga el del navegador.</div>';
+}
+
 /** Abre una sección: encabezado y pie que se repiten en cada hoja. Se cierra con fin_seccion(). */
 function inicio_seccion(string $titulo, string $subtitulo, string $fecha, string $pie): void
 {
@@ -111,6 +139,9 @@ function css_reporte(string $generado = ''): string
   .titulo h1 { margin: 0; font-size: 12.5px; letter-spacing: .3px; text-transform: uppercase; }
   .titulo h2 { margin: 2px 0 0; font-size: 11.5px; font-weight: 700; text-transform: uppercase; color: #1B396A; }
   .meta { display: flex; justify-content: space-between; font-size: 9px; color: #475569; margin-top: 4px; }
+  .aviso-nav { max-width: 279mm; margin: 14px auto 16mm; padding: 10px 14px; border-radius: 10px; background: #fff7db;
+               border: 1px solid #f59e0b; color: #78350f; font-size: 12.5px; }
+  .aviso-nav[hidden] { display: none; }
   /* Pie en la vista previa (en papel lo dibuja @page) */
   .pie { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 4mm; padding-top: 2.2mm;
          border-top: 1.2px solid #1B396A; font-size: 8px; color: #64748b; }
@@ -133,6 +164,9 @@ function css_reporte(string $generado = ''): string
     .pagina + .pagina { margin-top: 0; }
     .pagina > thead > tr > td { padding-top: 9mm; }
     .pagina > tfoot { display: none; }
+    html.sin-cajas .pagina > tfoot { display: table-footer-group; }
+    html.sin-cajas .pie .pie-pag { visibility: hidden; }
+    .aviso-nav { display: none !important; }
   }
 CSS;
     // Pie impreso en las tres cajas inferiores de la hoja: una sola línea azul de lado a lado

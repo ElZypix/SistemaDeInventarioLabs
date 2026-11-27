@@ -139,12 +139,14 @@ foreach ($labs as $lab) {
   .cq-leyenda { display: flex; justify-content: center; gap: 18px; margin-top: 5mm; font-size: 9.5px; color: #334155; }
   .cq-leyenda span { display: inline-flex; align-items: center; gap: 5px; }
 </style>
+<?= html_navegador() ?>
 </head>
 <body>
 <div class="barra">
   <div><strong>Reporte de inventario</strong><br><span>Usa "Guardar como PDF" en el destino de impresión. Tamaño carta, horizontal; activa "Gráficos de fondo" si no ves los colores.</span></div>
   <button type="button" onclick="window.print()">Imprimir / Guardar PDF</button>
 </div>
+<?= html_aviso_navegador() ?>
 
 <?php foreach ($secciones as $s): ?>
 <?php if ($conCroquis):

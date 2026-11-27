@@ -77,12 +77,14 @@ $pie = 'Generado el ' . date('d/m/Y H:i') . ' por ' . $yo['nombre'];
   .pend b { color: #111827; } .pend span { color: #334155; }
   .ok { font-size: 10px; color: #15803d; padding: 6px 0; }
 </style>
+<?= html_navegador() ?>
 </head>
 <body>
 <div class="barra">
   <div><strong>Software instalado e instalaciones pendientes</strong><br><span>Usa "Guardar como PDF" en el destino de impresión. Carta, horizontal.</span></div>
   <button type="button" onclick="window.print()">Imprimir / Guardar PDF</button>
 </div>
+<?= html_aviso_navegador() ?>
 
 <?php foreach ($labs as $lab):
     $equipos = $inv->equipos($lab['id']);
