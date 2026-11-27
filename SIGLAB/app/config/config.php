@@ -19,7 +19,7 @@ $env = static function (string $clave, string $defecto) use ($local): string {
 
 define('APP_NOMBRE', 'SIGLAB');
 define('APP_NOMBRE_LARGO', 'Sistema de Gestión de Laboratorios');
-define('APP_VERSION', '1.6');
+define('APP_VERSION', '1.7');
 define('INSTITUCION', 'Instituto Tecnológico de Comitán');
 
 define('DB_DSN',  $env('DB_DSN', ''));          // Solo para pruebas; normalmente vacío.

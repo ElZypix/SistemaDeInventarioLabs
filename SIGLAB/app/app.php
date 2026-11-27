@@ -80,7 +80,7 @@ $esAdmin = $u['rol'] === 'admin';
       </div>
 
       <div class="superior-acciones">
-        <button class="btn" id="btn-reporte"><span data-icono="pdf"></span><span class="ocultar-sm">Reporte PDF</span></button>
+        <button class="btn" id="btn-reporte"><span data-icono="pdf"></span><span class="ocultar-sm">Reportes</span></button>
         <button class="btn icon" id="btn-tema" aria-label="Cambiar tema"></button>
         <div class="cuenta">
           <button class="cuenta-btn" id="btn-cuenta" aria-haspopup="menu" aria-expanded="false">

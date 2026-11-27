@@ -196,6 +196,15 @@ switch ($accion) {
         json_out(['ok' => true, 'equipos' => $inv->equipos(null, $ids),
             'mensaje' => "Configuración de {$origen['numero']} copiada a $n equipo" . ($n === 1 ? '' : 's') . '.']);
 
+    case 'firmaReporte':
+        // Nombre y cargo sugeridos para el "Vo. Bo." de los reportes (lo puede guardar cualquier usuario)
+        usuario_actual();
+        $d = entrada();
+        $aj = new AjustesModelo();
+        $aj->guardar('firma_vobo_nombre', texto((string)($d['nombre'] ?? ''), 90) ?: null);
+        $aj->guardar('firma_vobo_cargo', texto((string)($d['cargo'] ?? ''), 90) ?: null);
+        json_out(['ok' => true, 'ajustes' => $aj->todos()]);
+
     case 'perfilLab':
         admin_escritura();
         $d = entrada();
