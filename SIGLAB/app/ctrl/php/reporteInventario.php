@@ -119,7 +119,8 @@ foreach ($labs as $lab) {
   .motivo { display: block; font-weight: 400; color: #475569; font-size: 8px; }
   .desde { display: block; font-weight: 400; color: #64748b; font-size: 7.5px; }
   .vacio { text-align: center; padding: 18px; border: 1px dashed #94a3b8; font-size: 11px; color: #475569; }
-  .sub-specs { font-size: 11px; text-transform: uppercase; margin: 5mm 0 2mm; color: #1B396A; }
+  .t-specs { margin-top: 5mm; }
+  .datos th.th-titulo { background: #fff; color: #1B396A; border: 0; border-bottom: 1.5px solid #1B396A; text-align: left; font-size: 11px; padding: 0 0 3px; }
 
   /* Croquis: cabe siempre en una hoja */
   .cq-piz { margin: 1mm auto 4mm; width: 45%; text-align: center; font-size: 9px; font-weight: 700; letter-spacing: 2px; color: #475569; border: 1px solid #94a3b8; background: #f1f5f9; padding: 3px; border-radius: 3px; }
@@ -239,9 +240,8 @@ foreach ($labs as $lab) {
     </table>
 
     <?php if ($conSpecs): ?>
-    <h3 class="sub-specs">Especificaciones técnicas</h3>
     <table class="datos t-specs">
-      <thead><tr>
+      <thead><tr><th colspan="8" class="th-titulo">Especificaciones técnicas</th></tr><tr>
         <th style="width:7%">Equipo</th><th style="width:15%">Modelo</th><th style="width:11%">No. de serie</th>
         <th style="width:17%">Procesador</th><th style="width:6%">RAM</th><th style="width:13%">Gráfica</th>
         <th style="width:14%">Motherboard</th><th>Almacenamiento</th>

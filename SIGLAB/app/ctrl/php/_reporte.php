@@ -110,12 +110,16 @@ function css_reporte(): string
   .firmas b { font-size: 10px; text-transform: uppercase; }
   .firmas small { color: #475569; font-size: 9px; }
 
-  @page { size: Letter landscape; margin: 9mm 10mm 7mm; }
+  /* Margen de la hoja en 0: así Chrome no imprime su propio encabezado (título y URL) ni su pie.
+     Los márgenes reales los dan el encabezado y el pie que se repiten en cada hoja. */
+  @page { size: Letter landscape; margin: 0; }
   @media print {
-    body { background: #fff; }
+    body { background: #fff; padding: 0 10mm; }
     .barra { display: none; }
     .pagina { width: 100%; margin: 0; box-shadow: none; }
     .pagina + .pagina { margin-top: 0; }
+    .pagina > thead > tr > td { padding-top: 9mm; }
+    .pagina > tfoot > tr > td { padding-bottom: 6mm; }
   }
 CSS;
 }
