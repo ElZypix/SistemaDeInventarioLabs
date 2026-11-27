@@ -63,7 +63,7 @@ function inicio_seccion(string $titulo, string $subtitulo, string $fecha, string
       </div>
     </div>
   </td></tr></thead>
-  <tfoot><tr><td><div class="pie"><?= h($pie) ?><i></i></div></td></tr></tfoot>
+  <tfoot><tr><td><div class="pie"><b>SIGLAB · Sistema de Gestión de Laboratorios</b><span><?= h($pie) ?></span><span class="pie-pag">Vista previa</span></div></td></tr></tfoot>
   <tbody><tr><td class="contenido">
 <?php
 }
@@ -74,9 +74,20 @@ function fin_seccion(): void
 }
 
 /** Estilos comunes. Carta horizontal con márgenes reales para que ninguna hoja salga vacía. */
-function css_reporte(): string
+/** Texto seguro para una cadena de CSS (content: "…"). */
+function css_txt(string $t): string
 {
-    return <<<'CSS'
+    return '"' . str_replace(['\\', '"', "\n"], ['\\\\', '\\"', ' '], $t) . '"';
+}
+
+/**
+ * Estilos comunes. $generado es el texto del centro del pie de página ("Generado el …").
+ * El pie impreso va en los márgenes de la hoja (@page), con el número de página a la derecha.
+ */
+function css_reporte(string $generado = ''): string
+{
+    $centro = css_txt($generado);
+    $base = <<<'CSS'
   * { box-sizing: border-box; }
   html, body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   body { margin: 0; background: #e5e7eb; color: #111827; font-family: Arial, Helvetica, sans-serif; }
@@ -100,8 +111,11 @@ function css_reporte(): string
   .titulo h1 { margin: 0; font-size: 12.5px; letter-spacing: .3px; text-transform: uppercase; }
   .titulo h2 { margin: 2px 0 0; font-size: 11.5px; font-weight: 700; text-transform: uppercase; color: #1B396A; }
   .meta { display: flex; justify-content: space-between; font-size: 9px; color: #475569; margin-top: 4px; }
-  .pie { text-align: center; font-size: 8px; color: #6b7280; padding-top: 3mm; }
-  .pie i { display: block; width: 60%; height: 2px; background: #9f1239; margin: 3px auto 0; }
+  /* Pie en la vista previa (en papel lo dibuja @page) */
+  .pie { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 4mm; padding-top: 2.2mm;
+         border-top: 1.2px solid #1B396A; font-size: 8px; color: #64748b; }
+  .pie b { color: #1B396A; letter-spacing: .3px; }
+  .pie .pie-pag { color: #1B396A; font-weight: 700; }
 
   .firmas { display: flex; justify-content: space-around; margin-top: 18mm; font-size: 9.5px; text-align: center; break-inside: avoid; }
   .firmas.una { justify-content: center; }
@@ -110,20 +124,39 @@ function css_reporte(): string
   .firmas b { font-size: 10px; text-transform: uppercase; }
   .firmas small { color: #475569; font-size: 9px; }
 
-  /* Margen de la hoja en 0: así Chrome no imprime su propio encabezado (título y URL) ni su pie.
-     Los márgenes reales los dan el encabezado y el pie que se repiten en cada hoja. */
-  @page {
-    size: Letter landscape;
-    margin: 0 0 8mm;
-    @bottom-right { content: "Página " counter(page) " de " counter(pages); font: 8px Arial, Helvetica, sans-serif; color: #475569; padding-right: 10mm; vertical-align: top; }
-  }
+  /* Arriba el margen es 0: así Chrome no imprime su propio encabezado (título y URL).
+     Abajo queda una franja donde va el pie de SIGLAB con el número de página. */
   @media print {
-    body { background: #fff; padding: 0 10mm; }
+    body { background: #fff; padding: 0; }
     .barra { display: none; }
     .pagina { width: 100%; margin: 0; box-shadow: none; }
     .pagina + .pagina { margin-top: 0; }
     .pagina > thead > tr > td { padding-top: 9mm; }
-    .pagina > tfoot > tr > td { padding-bottom: 0; }
+    .pagina > tfoot { display: none; }
   }
 CSS;
+    // Pie impreso en las tres cajas inferiores de la hoja: una sola línea azul de lado a lado
+    $pie = <<<CSS
+
+  @page {
+    size: Letter landscape;
+    margin: 0 10mm 12mm;
+    @bottom-left {
+      content: "SIGLAB · Sistema de Gestión de Laboratorios";
+      font: 700 7.5px Arial, Helvetica, sans-serif; letter-spacing: .3px; color: #1B396A;
+      border-top: 1.2px solid #1B396A; vertical-align: top; padding-top: 2.2mm; text-align: left;
+    }
+    @bottom-center {
+      content: {$centro};
+      font: 7.5px Arial, Helvetica, sans-serif; color: #64748b;
+      border-top: 1.2px solid #1B396A; vertical-align: top; padding-top: 2.2mm;
+    }
+    @bottom-right {
+      content: "Página " counter(page) " de " counter(pages);
+      font: 700 7.5px Arial, Helvetica, sans-serif; color: #1B396A;
+      border-top: 1.2px solid #1B396A; vertical-align: top; padding-top: 2.2mm; text-align: right;
+    }
+  }
+CSS;
+    return $base . $pie;
 }

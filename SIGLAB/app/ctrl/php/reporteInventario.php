@@ -50,7 +50,7 @@ const PER_TXT = ['presente' => '✓', 'faltante' => 'Faltante', 'danado' => 'Da�
 
 $fecha = fecha_larga();
 $firmas = firmas_de_get($yo);
-$pie = 'SIGLAB · Sistema de Gestión de Laboratorios · Generado el ' . date('d/m/Y H:i');
+$pie = INSTITUCION . ' · Generado el ' . date('d/m/Y H:i');
 
 $secciones = [];
 foreach ($labs as $lab) {
@@ -84,7 +84,7 @@ foreach ($labs as $lab) {
 <meta charset="UTF-8">
 <title>Inventario de laboratorios — SIGLAB</title>
 <style>
-<?= css_reporte() ?>
+<?= css_reporte($pie) ?>
 
   .resumen { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin-bottom: 7px; }
   .caja { border: 1px solid #cbd5e1; border-radius: 6px; padding: 5px 7px; font-size: 9px; color: #334155; border-left-width: 5px; }

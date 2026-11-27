@@ -50,7 +50,7 @@ $lugares = array_column($inv->lugares(), null, 'id');
 
 $fecha = fecha_larga();
 $firmas = firmas_de_get($yo);
-$pie = 'SIGLAB · Sistema de Gestión de Laboratorios · Generado el ' . date('d/m/Y H:i') . ' por ' . $yo['nombre'];
+$pie = 'Generado el ' . date('d/m/Y H:i') . ' por ' . $yo['nombre'];
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -58,7 +58,7 @@ $pie = 'SIGLAB · Sistema de Gestión de Laboratorios · Generado el ' . date('d
 <meta charset="UTF-8">
 <title>Software instalado — SIGLAB</title>
 <style>
-<?= css_reporte() ?>
+<?= css_reporte($pie) ?>
 
   .datos { width: 100%; border-collapse: collapse; font-size: 9px; }
   .datos thead { display: table-header-group; }
