@@ -4,6 +4,7 @@
 
 declare(strict_types=1);
 require_once __DIR__ . '/_bootstrap.php';
+require_once __DIR__ . '/_reporte.php';
 require_once __DIR__ . '/../../model/php/InventarioModelo.php';
 require_once __DIR__ . '/../../model/php/CatalogoModelo.php';
 
@@ -47,10 +48,9 @@ $labs = $inv->laboratorios();
 if ($labParam !== 'todos') $labs = array_values(array_filter($labs, static fn($l) => $l['id'] === (int)$labParam));
 $lugares = array_column($inv->lugares(), null, 'id');
 
-function h($v): string { return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
-const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
-$fecha = (int)date('j') . ' de ' . MESES[(int)date('n') - 1] . ' de ' . date('Y');
-$img = '../../view/img/';
+$fecha = fecha_larga();
+$firmas = firmas_de_get($yo);
+$pie = 'Generado el ' . date('d/m/Y H:i') . ' por ' . $yo['nombre'];
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -58,47 +58,33 @@ $img = '../../view/img/';
 <meta charset="UTF-8">
 <title>Software instalado — SIGLAB</title>
 <style>
-  * { box-sizing: border-box; }
-  body { margin: 0; background: #e5e7eb; color: #111827; font-family: Arial, Helvetica, sans-serif; }
-  .barra { position: sticky; top: 0; z-index: 5; display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: #0f172a; color: #fff; }
-  .barra span { color: #cbd5e1; font-size: 12px; }
-  .barra button { border: 0; border-radius: 8px; padding: 9px 16px; font-weight: 700; cursor: pointer; background: #fff; color: #0f172a; }
-  .hoja { width: 279mm; min-height: 216mm; margin: 18px auto; padding: 10mm 11mm 14mm; background: #fff; box-shadow: 0 8px 30px rgba(15,23,42,.18); position: relative; }
-  .hoja + .hoja { break-before: page; }
-  .logos { display: flex; justify-content: space-between; align-items: center; height: 18mm; margin-bottom: 3mm; }
-  .logos .der { display: flex; align-items: center; gap: 5mm; }
-  .logo-sep { height: 11mm; } .logo-tec { height: 13mm; } .logo-itc { height: 17mm; }
-  .titulo { border: 1.3px solid #111827; text-align: center; padding: 5px 8px; }
-  .titulo h1 { margin: 0; font-size: 13px; text-transform: uppercase; }
-  .titulo h2 { margin: 2px 0 0; font-size: 12px; text-transform: uppercase; color: #1B396A; }
-  .meta { display: flex; justify-content: space-between; font-size: 9.5px; color: #475569; margin: 4px 0 8px; }
-  table { width: 100%; border-collapse: collapse; font-size: 9px; }
-  thead { display: table-header-group; }
-  th { background: #1B396A; color: #fff; border: 1px solid #1B396A; padding: 4px 2px; font-size: 8px; }
-  th.vert { height: 34mm; vertical-align: bottom; }
-  th.vert span { writing-mode: vertical-rl; transform: rotate(180deg); white-space: nowrap; display: inline-block; }
-  td { border: 1px solid #94a3b8; padding: 3px; text-align: center; }
-  td.num { font-weight: 800; font-family: Consolas, monospace; white-space: nowrap; }
-  td.si { color: #15803d; font-weight: 900; }
-  td.si small { font-size: 7.5px; font-weight: 700; white-space: nowrap; }
-  td.no { color: #b91c1c; background: #fef2f2; }
-  tr.total td { background: #f1f5f9; font-weight: 700; font-size: 8px; }
-  tr { break-inside: avoid; }
-  th, td.no, tr.total td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  h3 { font-size: 11px; text-transform: uppercase; color: #1B396A; margin: 7mm 0 3mm; border-bottom: 1.5px solid #1B396A; padding-bottom: 2px; }
+<?= css_reporte($pie) ?>
+
+  .datos { width: 100%; border-collapse: collapse; font-size: 9px; }
+  .datos thead { display: table-header-group; }
+  .datos th { background: #1B396A; color: #fff; border: 1px solid #1B396A; padding: 4px 2px; font-size: 8px; }
+  .datos th.vert { height: 34mm; vertical-align: bottom; }
+  .datos th.vert span { writing-mode: vertical-rl; transform: rotate(180deg); white-space: nowrap; display: inline-block; }
+  .datos td { border: 1px solid #94a3b8; padding: 3px; text-align: center; }
+  .datos td.num { font-weight: 800; font-family: Consolas, monospace; white-space: nowrap; }
+  .datos td.si { color: #15803d; font-weight: 900; }
+  .datos td.si small { font-size: 7.5px; font-weight: 700; white-space: nowrap; }
+  .datos td.no { color: #b91c1c; background: #fde0e0; }
+  .datos tr.total td { background: #f1f5f9; font-weight: 700; font-size: 8px; }
+  .datos tr { break-inside: avoid; }
+  h3 { font-size: 11px; text-transform: uppercase; color: #1B396A; margin: 7mm 0 3mm; border-bottom: 1.5px solid #1B396A; padding-bottom: 2px; break-after: avoid; }
   .pend { display: grid; grid-template-columns: 52mm 1fr; border-bottom: 1px solid #e2e8f0; font-size: 9.5px; padding: 3px 0; break-inside: avoid; }
   .pend b { color: #111827; } .pend span { color: #334155; }
   .ok { font-size: 10px; color: #15803d; padding: 6px 0; }
-  .pie { position: absolute; left: 11mm; right: 11mm; bottom: 5mm; text-align: center; font-size: 8px; color: #6b7280; }
-  @page { size: Letter landscape; margin: 0; }
-  @media print { body { background: #fff; } .barra { display: none; } .hoja { margin: 0; box-shadow: none; width: auto; } }
 </style>
+<?= html_navegador() ?>
 </head>
 <body>
 <div class="barra">
   <div><strong>Software instalado e instalaciones pendientes</strong><br><span>Usa "Guardar como PDF" en el destino de impresión. Carta, horizontal.</span></div>
   <button type="button" onclick="window.print()">Imprimir / Guardar PDF</button>
 </div>
+<?= html_aviso_navegador() ?>
 
 <?php foreach ($labs as $lab):
     $equipos = $inv->equipos($lab['id']);
@@ -109,18 +95,11 @@ $img = '../../view/img/';
     });
     $n = count($equipos);
 ?>
-<section class="hoja">
-  <div class="logos">
-    <img class="logo-sep" src="<?= $img ?>sep.png" alt="SEP">
-    <div class="der"><img class="logo-tec" src="<?= $img ?>tecnm.png" alt="TecNM"><img class="logo-itc" src="<?= $img ?>comitan.png" alt="ITC"></div>
-  </div>
-  <div class="titulo"><h1>Software instalado por equipo</h1><h2><?= h($lab['nombre']) ?></h2></div>
-  <div class="meta"><span><?= h(INSTITUCION) ?> · Comitán de Domínguez, Chiapas</span><span>Fecha de corte: <?= h($fecha) ?></span></div>
-
+<?php inicio_seccion('Software instalado por equipo', $lab['nombre'], $fecha, $pie); ?>
   <?php if (!$programas || !$equipos): ?>
     <p class="ok">No hay programas o equipos para mostrar.</p>
   <?php else: ?>
-  <table>
+  <table class="datos">
     <thead><tr>
       <th style="width:16mm">Equipo</th>
       <th style="width:14mm">Ubicación</th>
@@ -157,8 +136,8 @@ $img = '../../view/img/';
   <?php endforeach; ?>
   <?php if (!$hay): ?><p class="ok">✓ Todos los programas seleccionados están instalados en todos los equipos.</p><?php endif; ?>
   <?php endif; ?>
-  <div class="pie">SIGLAB · Sistema de Gestión de Laboratorios · Generado el <?= date('d/m/Y H:i') ?> por <?= h($yo['nombre']) ?></div>
-</section>
+  <?= html_firmas($firmas) ?>
+<?php fin_seccion(); ?>
 <?php endforeach; ?>
 
 <?php if ($auto): ?><script>window.addEventListener('load', () => setTimeout(() => window.print(), 500));</script><?php endif; ?>

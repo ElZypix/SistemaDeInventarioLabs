@@ -6,7 +6,7 @@ import { icono } from './iconos.js';
 import { esc, el, toast, confirmar, abrirModal, conCarga } from './ui.js';
 import {
   S, ESTADOS, PERIFERICOS, PER_ESTADOS, FAMILIAS, esAdmin, estadoDe,
-  soPorId, swPorId, resumenSpecs, lugarPorId, equipoPorId, equiposLab, lugaresLab, labPorId, ubicacionTxt, pasaFiltros, hayFiltros,
+  soPorId, swPorId, compPorId, textoDisco, lugarPorId, equipoPorId, equiposLab, lugaresLab, labPorId, ubicacionTxt, pasaFiltros, hayFiltros,
   diasDesde, haceTxt, fechaCorta,
 } from './estado.js';
 import { abrirEquipo, abrirLote, abrirCopiar } from './equipo.js';
@@ -650,11 +650,11 @@ function mostrarTip(pcEl) {
       <dt>Sistema</dt><dd>${esc(so)}</dd>
       <dt>Periféricos</dt><dd>${malos.length ? esc(malos.join(' · ')) : 'Completos'}</dd>
       <dt>Software</dt><dd>${esc(sw)}</dd>
-      ${resumenSpecs(e) ? `<dt>Equipo</dt><dd>${esc(resumenSpecs(e))}</dd>` : ''}
       ${e.observaciones ? `<dt>Notas</dt><dd>${esc(e.observaciones)}</dd>` : ''}
       ${e.estado_desde ? `<dt>Desde</dt><dd>${esc(fechaCorta(e.estado_desde))} (${haceTxt(e.estado_desde)})</dd>` : ''}
       ${e.pendientes ? `<dt>Pendientes</dt><dd>${e.pendientes} sin completar</dd>` : ''}
     </dl>
+    ${specsTip(e)}
     ${e.estado_manual && e.motivo_manual ? `<div class="tp-motivo">${icono('candado', 'sm')} ${esc(e.motivo_manual)}</div>` : ''}`;
   tip.hidden = false;
   const r = pcEl.getBoundingClientRect();
@@ -666,6 +666,18 @@ function mostrarTip(pcEl) {
   let y = Math.min(innerHeight - h - 10, Math.max(70, r.top));
   tip.style.left = `${x}px`;
   tip.style.top = `${y}px`;
+}
+/** Especificaciones para el tooltip: solo los renglones que tienen dato (sin guiones ni huecos). */
+function specsTip(e) {
+  const filas = [
+    ['Modelo', compPorId(e.modelo_id)?.nombre],
+    ['Procesador', compPorId(e.procesador_id)?.nombre],
+    ['RAM', e.ram_gb ? `${e.ram_gb} GB` : ''],
+    ['Almacenam.', (e.discos || []).filter((d) => d.gb).map(textoDisco).join(' + ')],
+    ['Gráfica', compPorId(e.grafica_id)?.nombre],
+  ].filter(([, v]) => v);
+  if (!filas.length) return '';
+  return `<dl class="tp-specs">${filas.map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join('')}</dl>`;
 }
 export function ocultarTip() { clearTimeout(tipTimer); tip.hidden = true; }
 

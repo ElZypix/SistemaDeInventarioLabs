@@ -6,6 +6,7 @@ import { esc, el, toast, abrirModal, conCarga, aplicarTema, pintarBotonTema, tem
 import { S, ESTADOS, esAdmin, estadoDe, equiposLab, labPorId, ubicacionTxt, coincideTexto } from './estado.js';
 import { renderTodo, mostrarEsqueleto, cambiarLab, alternarSeleccion, alternarEdicion, aplicarFiltros, resaltarEquipo } from './mapa.js';
 import { abrirEquipo } from './equipo.js';
+import { combobox } from './combobox.js';
 
 pintarIconos();
 const $ = (s) => document.querySelector(s);
@@ -21,6 +22,7 @@ async function cargar() {
   S.equipos = d.equipos;
   S.so = d.so;
   S.software = d.software;
+  S.ajustes = d.ajustes || {};
   S.componentes = d.componentes || [];
   S.perfiles = d.perfiles || [];
   let guardado = null;
@@ -165,48 +167,143 @@ function cambiarPassword(obligatorio) {
 /*  Reporte PDF                                                        */
 /* ------------------------------------------------------------------ */
 
+const VOBO_SUGERIDO = { nombre: 'ING. HUGO ANTONIO OCAMPO ALFARO', cargo: 'Encargado del laboratorio' };
+const TIPOS_REPORTE = {
+  inventario: { texto: 'Inventario y estado (PDF)', icono: 'pdf', sub: 'Croquis, inventario y especificaciones' },
+  software: { texto: 'Software e instalaciones pendientes (PDF)', icono: 'matriz', sub: 'Matriz de programas por equipo' },
+  excel: { texto: 'Excel completo', icono: 'excel', sub: 'Todas las hojas en un archivo .xlsx' },
+};
+const leerLS = (k, def) => { try { return localStorage.getItem(k) ?? def; } catch { return def; } };
+const guardarLS = (k, v) => { try { localStorage.setItem(k, v); } catch { /* sin almacenamiento */ } };
+
 $('#btn-reporte').addEventListener('click', () => {
   const lab = labPorId(S.labId);
+  let tipo = leerLS('siglab-rep-tipo', 'inventario');
+  if (!TIPOS_REPORTE[tipo]) tipo = 'inventario';
+  let modoFirmas = leerLS('siglab-rep-firmas', 'ambas');
+  const aj = S.ajustes || {};
+  const claveCargo = `siglab-firma-cargo-${S.usuario.id}`;
+
   const cuerpo = el(`<div style="display:contents">
-    <div class="campo"><label for="rp-lab">Laboratorio</label>
-      <select class="select" id="rp-lab">
-        ${S.labs.map((l) => `<option value="${l.id}" ${l.id === lab?.id ? 'selected' : ''}>${esc(l.nombre)}</option>`).join('')}
-        <option value="todos">Ambos laboratorios</option>
-      </select></div>
-    <div class="campo"><label for="rp-estado">Equipos a incluir</label>
-      <select class="select" id="rp-estado">
-        <option value="todos">Todos los equipos</option>
-        ${Object.entries(ESTADOS).map(([k, v]) => `<option value="${k}">Solo: ${v.nombre}</option>`).join('')}
-      </select></div>
-    <label class="switch"><input type="checkbox" id="rp-sw" checked><span class="pista"></span>Incluir columna de software instalado</label>
-    <label class="switch"><input type="checkbox" id="rp-croquis" checked><span class="pista"></span>Incluir croquis del laboratorio (mapa a color)</label>
-    <label class="switch"><input type="checkbox" id="rp-specs"><span class="pista"></span>Incluir especificaciones técnicas (procesador, RAM, discos…)</label>
-    <p class="ayuda" style="margin:0">Se abre en una pestaña nueva con los logos institucionales. Elige <b>Guardar como PDF</b> en el cuadro de impresión.</p>
-    <div class="rp-extra">
-      <button class="btn" type="button" id="rp-software">${icono('matriz', 'sm')} Software e instalaciones pendientes (PDF)</button>
-      <button class="btn" type="button" id="rp-excel">${icono('excel', 'sm')} Exportar todo a Excel</button>
+    <div class="campo"><span class="etiqueta">Tipo de reporte</span><div id="rp-tipo"></div></div>
+    <div class="rp-grupo" data-para="inventario software">
+      <div class="campo"><label for="rp-lab">Laboratorio</label>
+        <select class="select" id="rp-lab">
+          ${S.labs.map((l) => `<option value="${l.id}" ${l.id === lab?.id ? 'selected' : ''}>${esc(l.nombre)}</option>`).join('')}
+          <option value="todos">Ambos laboratorios</option>
+        </select></div>
     </div>
+    <div class="rp-grupo" data-para="inventario">
+      <div class="campo"><label for="rp-estado">Equipos a incluir</label>
+        <select class="select" id="rp-estado">
+          <option value="todos">Todos los equipos</option>
+          ${Object.entries(ESTADOS).map(([k, v]) => `<option value="${k}">Solo: ${v.nombre}</option>`).join('')}
+        </select></div>
+      <label class="switch"><input type="checkbox" id="rp-croquis" checked><span class="pista"></span>Incluir croquis del laboratorio (mapa a color)</label>
+      <label class="switch"><input type="checkbox" id="rp-sw" checked><span class="pista"></span>Incluir columna de software instalado</label>
+      <label class="switch"><input type="checkbox" id="rp-specs"><span class="pista"></span>Incluir especificaciones técnicas (procesador, RAM, discos…)</label>
+    </div>
+    <div class="rp-grupo" data-para="inventario software">
+      <div class="campo"><span class="etiqueta">Firmas al final</span>
+        <div class="segmentado rp-firmas" id="rp-firmas">
+          ${[['ambas', 'Elaboró y Vo. Bo.'], ['elaboro', 'Solo Elaboró'], ['vobo', 'Solo Vo. Bo.'], ['ninguna', 'Ninguna']]
+            .map(([v, t]) => `<button type="button" data-v="${v}">${t}</button>`).join('')}
+        </div></div>
+      <div class="rp-firma" data-f="elaboro">
+        <span class="rp-firma-rol">Elaboró</span>
+        <input class="input" id="rp-fe-nombre" maxlength="90" placeholder="Nombre completo" value="${esc(S.usuario.nombre || '')}">
+        <input class="input" id="rp-fe-cargo" maxlength="90" placeholder="Cargo (opcional)" value="${esc(leerLS(claveCargo, ''))}">
+      </div>
+      <div class="rp-firma" data-f="vobo">
+        <span class="rp-firma-rol">Vo. Bo.</span>
+        <input class="input" id="rp-fv-nombre" maxlength="90" placeholder="Nombre completo" value="${esc(aj.firma_vobo_nombre ?? VOBO_SUGERIDO.nombre)}">
+        <input class="input" id="rp-fv-cargo" maxlength="90" placeholder="Cargo (opcional)" value="${esc(aj.firma_vobo_cargo ?? VOBO_SUGERIDO.cargo)}">
+      </div>
+    </div>
+    <div class="rp-grupo" data-para="excel">
+      <p class="ayuda" style="margin:0">Descarga un archivo de Excel con el inventario de ambos laboratorios, el software por equipo, las especificaciones y los pendientes, cada uno en su hoja.</p>
+    </div>
+    <p class="ayuda rp-nota" data-para="inventario software" style="margin:0">Se abre en una pestaña nueva. En el cuadro de impresión elige <b>Guardar como PDF</b> y activa <b>Gráficos de fondo</b> para que salgan los colores.</p>
   </div>`);
   const pie = el(`<div style="display:contents"><span class="espacio"></span><button class="btn" data-c>Cancelar</button>
-      <button class="btn primario" data-ok>${icono('pdf', 'sm')} Generar reporte</button></div>`);
-  const m = abrirModal({ titulo: 'Reportes', subtitulo: 'Inventario, croquis, software y Excel', cuerpo, pie, ancho: 500 });
+      <button class="btn primario" data-ok></button></div>`);
+  const m = abrirModal({ titulo: 'Reportes', subtitulo: 'Elige el tipo de reporte y sus opciones', cuerpo, pie, ancho: 640 });
   pie.querySelector('[data-c]').onclick = () => m.cerrar();
-  cuerpo.querySelector('#rp-software').onclick = () => {
-    window.open(`ctrl/php/reporteSoftware.php?lab=${cuerpo.querySelector('#rp-lab').value}&auto=1`, '_blank', 'noopener');
-    m.cerrar();
-  };
-  const btnX = cuerpo.querySelector('#rp-excel');
-  btnX.onclick = () => import('./exportar.js').then((x) => x.exportarExcel(btnX));
-  pie.querySelector('[data-ok]').onclick = () => {
-    const q = new URLSearchParams({
-      croquis: cuerpo.querySelector('#rp-croquis').checked ? '1' : '0',
-      lab: cuerpo.querySelector('#rp-lab').value,
-      estado: cuerpo.querySelector('#rp-estado').value,
-      software: cuerpo.querySelector('#rp-sw').checked ? '1' : '0',
-      specs: cuerpo.querySelector('#rp-specs').checked ? '1' : '0',
-      auto: '1',
+  const ok = pie.querySelector('[data-ok]');
+
+  /** Muestra solo las opciones del tipo elegido */
+  function pintarTipo(animar) {
+    cuerpo.querySelectorAll('[data-para]').forEach((g) => {
+      const ver = g.dataset.para.split(' ').includes(tipo);
+      if (ver && g.hidden && animar) g.animate([{ opacity: 0, transform: 'translateY(-4px)' }, { opacity: 1, transform: 'none' }], { duration: 200, easing: 'ease-out' });
+      g.hidden = !ver;
     });
-    window.open(`ctrl/php/reporteInventario.php?${q}`, '_blank', 'noopener');
+    ok.innerHTML = tipo === 'excel' ? `${icono('excel', 'sm')} Descargar Excel` : `${icono('pdf', 'sm')} Generar PDF`;
+  }
+  function pintarFirmas(animar) {
+    cuerpo.querySelectorAll('#rp-firmas button').forEach((b) => b.classList.toggle('sel', b.dataset.v === modoFirmas));
+    cuerpo.querySelectorAll('.rp-firma').forEach((f) => {
+      const ver = modoFirmas === 'ambas' || modoFirmas === f.dataset.f;
+      if (ver && f.hidden && animar) f.animate([{ opacity: 0, transform: 'translateY(-4px)' }, { opacity: 1, transform: 'none' }], { duration: 200, easing: 'ease-out' });
+      f.hidden = !ver;
+    });
+  }
+  const cbTipo = combobox({
+    valor: tipo,
+    opciones: () => Object.entries(TIPOS_REPORTE).map(([k, t]) => ({ valor: k, texto: t.texto, sub: t.sub })),
+    alElegir: (v) => { tipo = v; pintarTipo(true); },
+  });
+  cuerpo.querySelector('#rp-tipo').append(cbTipo.el);
+  cuerpo.querySelector('#rp-firmas').addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    modoFirmas = b.dataset.v; pintarFirmas(true);
+  });
+  pintarTipo(false);
+  pintarFirmas(false);
+
+  const firmasQuery = () => ({
+    firmas: modoFirmas,
+    fe_nombre: cuerpo.querySelector('#rp-fe-nombre').value.trim(),
+    fe_cargo: cuerpo.querySelector('#rp-fe-cargo').value.trim(),
+    fv_nombre: cuerpo.querySelector('#rp-fv-nombre').value.trim(),
+    fv_cargo: cuerpo.querySelector('#rp-fv-cargo').value.trim(),
+  });
+  /** Recuerda las preferencias; el Vo. Bo. se guarda para todos si cambió */
+  function recordar() {
+    const f = firmasQuery();
+    guardarLS('siglab-rep-tipo', tipo);
+    guardarLS('siglab-rep-firmas', modoFirmas);
+    guardarLS(claveCargo, f.fe_cargo);
+    const antes = { nombre: aj.firma_vobo_nombre ?? VOBO_SUGERIDO.nombre, cargo: aj.firma_vobo_cargo ?? VOBO_SUGERIDO.cargo };
+    if (f.fv_nombre !== antes.nombre || f.fv_cargo !== antes.cargo) {
+      api('ctrl/php/inventarioApi.php?accion=firmaReporte', { body: { nombre: f.fv_nombre, cargo: f.fv_cargo } })
+        .then((r) => { S.ajustes = r.ajustes; }).catch(() => {});
+    }
+  }
+
+  ok.onclick = () => {
+    if (tipo === 'excel') {
+      guardarLS('siglab-rep-tipo', tipo);
+      import('./exportar.js').then((x) => x.exportarExcel(ok)).then(() => m.cerrar());
+      return;
+    }
+    recordar();
+    const labSel = cuerpo.querySelector('#rp-lab').value;
+    if (tipo === 'software') {
+      const q = new URLSearchParams({ lab: labSel, ...firmasQuery(), auto: '1' });
+      window.open(`ctrl/php/reporteSoftware.php?${q}`, '_blank', 'noopener');
+    } else {
+      const q = new URLSearchParams({
+        lab: labSel,
+        estado: cuerpo.querySelector('#rp-estado').value,
+        croquis: cuerpo.querySelector('#rp-croquis').checked ? '1' : '0',
+        software: cuerpo.querySelector('#rp-sw').checked ? '1' : '0',
+        specs: cuerpo.querySelector('#rp-specs').checked ? '1' : '0',
+        ...firmasQuery(),
+        auto: '1',
+      });
+      window.open(`ctrl/php/reporteInventario.php?${q}`, '_blank', 'noopener');
+    }
     m.cerrar();
   };
 });

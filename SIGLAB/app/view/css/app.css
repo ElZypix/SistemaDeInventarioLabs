@@ -302,6 +302,7 @@ body.arrastrando .pc:not(.origen-arrastre):hover { transform: none; }
 .tooltip-pc dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; }
 .tooltip-pc dt { color: var(--texto-3); font-weight: 600; }
 .tooltip-pc dd { margin: 0; }
+.tooltip-pc .tp-specs { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--borde); }
 .tooltip-pc .tp-motivo { margin-top: 8px; padding: 6px 8px; border-radius: 8px; background: var(--surface-3); color: var(--texto-2); }
 
 /* ---------- Modal de equipo ---------- */
@@ -786,3 +787,12 @@ body.sin-scroll { overflow: hidden; }
 
 .form-fila { display: flex; gap: 12px; }
 .form-fila > .campo { flex: 1; min-width: 0; }
+
+/* Ventana de reportes (v1.7) */
+.rp-grupo { display: flex; flex-direction: column; gap: 12px; }
+.rp-grupo[hidden], .rp-firma[hidden], .rp-nota[hidden] { display: none; }
+.rp-firmas { width: 100%; }
+.rp-firmas button { flex: 1; justify-content: center; font-size: 12px; padding: 6px 4px; }
+.rp-firma { display: grid; grid-template-columns: 58px 1.6fr 1fr; gap: 8px; align-items: center; }
+.rp-firma-rol { font-size: 12px; font-weight: 700; color: var(--texto-2); }
+@media (max-width: 560px) { .rp-firma { grid-template-columns: 1fr; } }
